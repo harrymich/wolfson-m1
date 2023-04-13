@@ -343,7 +343,7 @@ app.layout = html.Div(
     dcc.Dropdown(options = [], value='0', id='Piece', placeholder='Select Piece', clearable=False),
     html.H3(children="Piece Summary"),
     html.Div([dash_table.DataTable(data=[], id='piece_summary')],
-             style={'width': '20%',},className="dbc dbc-row-selectable"),
+             style={'width': '20%',},className="dbc"),
     html.P(id='str_pie'),
     html.P(id='dis_pie'),
     html.P(id='tim_pie'),
@@ -371,7 +371,7 @@ app.layout = html.Div(
     html.P(children="See the full piece data below",
         className="header-description"),
     html.Div([dash_table.DataTable(data=[], id='piece_data', export_format='csv')],
-             style={'width': '40%',},className="dbc dbc-row-selectable")
+             style={'width': '40%',},className="dbc")
 ])),
 )
 
