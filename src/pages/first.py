@@ -20,13 +20,13 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-# assign path
+# assign path for reading csv files.
 path, dirs, files = next(os.walk("./csv/"))
 file_count = len(files)
-# create empty session list
+# create empty outing session list
 sessions_list = []
 
-# append sessions to list
+# append outing sessions to list
 for i in range(file_count):
     temp_df = pd.read_csv("./csv/" + files[i], skiprows=28, usecols=[1, 3, 4, 5, 8, 9, 10, 22, 23]).drop([0])
 
@@ -48,14 +48,15 @@ for i in range(file_count):
 
 # Parameter Definition
 
-# Green Dragon Bridge latitude and longitude
+# Green Dragon Bridge latitude and longitude. This is used later to define after which location pieces
+# are actually identified. Also defining stroke slice which is used to define which sections of a dataframe
+# are analysed.
 gr_dr_lat = 52.217426
 gr_dr_lon = 0.145928
 stroke_slice = (0, -1)
 
-
 # Function Definition
-
+# Reading a session's date and time. Credit to Rob Sales.
 def read_session_datetime(fname):
     import datetime
 
