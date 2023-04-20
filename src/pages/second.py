@@ -90,6 +90,7 @@ layout = html.Div([
     dcc.Store(id='store_pieces', data=[], storage_type='memory'),
     html.P(children="Now, choose the pieces that you want to compare:"),
     dcc.Checklist(id='piece_selection', options=[]),
+    html.P(id='err', style={'color': 'red'}),
     html.Hr(),
     html.Div(['Split range for plot:', dcc.RangeSlider(60, 150, 5, count=1, value=[80, 120], id="split_range")]),
     html.Div(['Rate range for plot:', dcc.RangeSlider(15, 50, 1, count=1, value=[30, 45], id="rate_range")]),
@@ -156,6 +157,7 @@ def piece_prompts(outings):
 #  ======= Select Outing, Piece Rate lower limit and Stroke Count lower limit to produce piece list ============
 @callback(Output('piece_figure', 'figure'),
           Output('start_comp', 'data'),
+          Output('err', 'children'),
           Input('piece_selection', 'value'),
           Input('split_range', 'value'),
           Input('rate_range', 'value'),
@@ -230,6 +232,11 @@ def piece_list(pieces, split_range, rate_range, draws, winds, burns, split_bench
 
     for x, i in enumerate(pieces_to_plot):
         piece_data = i
+        start_length = draws + winds + burns
+        if len(piece_data['Split']) < start_length:
+            return dash.no_update, dash.no_update, 'One of the pieces you\'ve selected is less than the total start ' \
+                                                   'length of {} strokes. Please unselect it or change your start ' \
+                                                   'definition below!'.format(start_length)
         draws_split = piece_data['Split'].iloc[draws - 1]
         winds_split = piece_data['Split'].iloc[draws + winds - 1]
         burns_split = piece_data['Split'].iloc[draws + winds + burns - 1]
@@ -255,4 +262,4 @@ def piece_list(pieces, split_range, rate_range, draws, winds, burns, split_bench
                   annotation_position='bottom left', row='all', line_width=0, fillcolor="red", opacity=0.2)
     fig.update_traces(xaxis='x2')
 
-    return fig, df.to_dict('records')
+    return fig, df.to_dict('records'), ''
