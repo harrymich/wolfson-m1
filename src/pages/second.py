@@ -18,10 +18,8 @@ dash.register_page(__name__, path='/piece_comparison', name='Piece Comparison', 
                    image='wcbc_crest.jpg', description='Compare pieces\' splits and rates')
 
 # Green Dragon Bridge latitude and longitude
-gr_dr_lat = 52.217426
-gr_dr_lon = 0.145928
-split_bounds = (80, 120)
-
+gr_dr_lat = 52.356794
+gr_dr_lon = 0.049909
 
 def read_session_date_time(fname):
     import datetime
@@ -104,8 +102,8 @@ layout = html.Div([
     dcc.Checklist(id='piece_selection', options=[]),
     html.P(id='err', style={'color': 'red'}),
     html.Hr(),
-    html.Div(['Split range for plot:', dcc.RangeSlider(60, 150, 5, count=1, value=[80, 120], id="split_range")]),
-    html.Div(['Rate range for plot:', dcc.RangeSlider(15, 50, 1, count=1, value=[30, 45], id="rate_range")]),
+    html.Div(['Split range for plot:', dcc.RangeSlider(60, 150, 5, count=1, value=[100, 150], id="split_range")]),
+    html.Div(['Rate range for plot:', dcc.RangeSlider(15, 50, 1, count=1, value=[24, 32], id="rate_range")]),
     dcc.Graph(id="piece_figure"),
     html.P("Add benchmark lines for split and rate"),
     html.Div(['Split benchmark:',

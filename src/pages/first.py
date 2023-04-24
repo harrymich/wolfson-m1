@@ -239,8 +239,8 @@ layout = html.Div(
         dcc.Dropdown(options=x_axis, value=x_axis[0], id='x_axis', placeholder='Select variable to plot against',
                      clearable=False),
         html.Div(['Split and rate range for plot:']),
-        dcc.RangeSlider(60, 150, 5, count=1, value=[80, 120], id="split_range"),
-        dcc.RangeSlider(15, 50, 1, count=1, value=[30, 45], id="rate_range"),
+        dcc.RangeSlider(60, 150, 5, count=1, value=[100, 150], id="split_range"),
+        dcc.RangeSlider(15, 50, 1, count=1, value=[24, 32], id="rate_range"),
         html.Div(
             children=[
                 html.Div(
