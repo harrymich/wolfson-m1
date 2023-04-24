@@ -6,9 +6,9 @@ dash.register_page(__name__, name='To-do List')
 todo = ['Compare change in rate and split after stride. Think about presenting in a table or in a graph instead. Maybe '
         'highlight 5 strokes after stride on graph and then have text output below.',
         'Find a way to plot piece comparison against distance and time and not just stroke rate',
-        'Add overview of all outings with distance rowed, average/max/min splits and plot per day. Perhaps add a '
-        'total distance and average/max/min split for all training so far.',
-        'why the fuck is the legend for a line showing 3 strokes after that line is finished...']
+        'Add graphs for the different pieces in the piece comparison page',
+        'why the fuck is the legend for a line showing 3 strokes after that line is finished...',
+        'Find a way to add weather data on overall plot']
 
 layout = html.Div(
     [

@@ -19,6 +19,10 @@ import re
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import json
+import dash_leaflet as dl
+
+MAP_ID = "map_id"
 
 # assign path for reading csv files.
 path, dirs, files = next(os.walk("./csv/"))
@@ -51,10 +55,10 @@ for i in range(file_count):
 # Green Dragon Bridge latitude and longitude. This is used later to define after which location pieces
 # are actually identified. Also defining stroke slice which is used to define which sections of a dataframe
 # are analysed.
-gr_dr_lat = 52.217426
-gr_dr_lon = 0.145928
-stroke_slice = (0, -1)
+gr_dr_lat = 52.356794
+gr_dr_lon = 0.049909
 
+# 52.356794, 0.049909
 # Function Definition
 # Reading a session's date and time. Credit to Rob Sales.
 def read_session_datetime(fname):
@@ -80,46 +84,40 @@ def read_session_datetime(fname):
 
     return session_datetime
 
-
-def get_statistics(fname, stroke_slice):
+# Reading a session's date and time. Credit to Rob Sales.
+def get_statistics(fname):
     data = fname
 
-    if stroke_slice:
-        indices = slice(stroke_slice[0], stroke_slice[1] - 1)
-    else:
-        indices = slice(0, (data["Total Strokes"].size - 1))
-
-    speed = data["Speed (GPS)"][indices]
+    speed = data["Speed (GPS)"]
     min_speed = speed.min()
     max_speed = speed.max()
     avg_speed = np.average(speed)
 
-    split = data["Split (GPS)"][indices]
+    split = data["Split (GPS)"]
     min_split = split.min()
     max_split = split.max()
     avg_split = np.average(split)
 
-    stroke_rate = data["Stroke Rate"][indices]
+    stroke_rate = data["Stroke Rate"]
     min_stroke_rate = stroke_rate.min()
     max_stroke_rate = stroke_rate.max()
     avg_stroke_rate = np.average(stroke_rate)
 
-    distance_per_stroke = data["Distance/Stroke (GPS)"][indices]
+    distance_per_stroke = data["Distance/Stroke (GPS)"]
     min_distance_per_stroke = distance_per_stroke.min()
     max_distance_per_stroke = distance_per_stroke.max()
     avg_distance_per_stroke = np.average(distance_per_stroke)
 
-    total_strokes = data["Total Strokes"][indices]
-    total_strokes = int(total_strokes.iloc[-1] - total_strokes.iloc[0])
+    total_strokes = len(data["Total Strokes"])
 
     stroke_count = "{} - {}".format("Total Number of Strokes", total_strokes)
 
-    distance = data["Distance (GPS)"][indices]
+    distance = data["Distance (GPS)"]
     total_distance = distance.iloc[-1] - distance.iloc[0]
 
     distance = "{} - {:.2f}".format("Total Distance Rowed (m)", total_distance)
 
-    elapsed_time = data["Elapsed Time"][indices]
+    elapsed_time = data["Elapsed Time"]
     elapsed_time = elapsed_time.iloc[-1] - elapsed_time.iloc[0]
     elapsed_time = time.strftime("%M:%S", time.gmtime(elapsed_time))
 
@@ -174,7 +172,7 @@ for name in files:
 
 x_axis = ['Stroke Count', 'Piece Time (s)', 'Piece Distance (m)']
 
-dash.register_page(__name__, path='/', name='Home', title='Home', image='wcbc_crest.jpg',
+dash.register_page(__name__, path='/session_summary', name='Session Summary', title='Session Summary', image='wcbc_crest.jpg',
                    description='Come here for all your sweet split and rate analysis')
 
 # app.title = "Outing Analysis"
@@ -195,17 +193,23 @@ layout = html.Div(
         dcc.Store(id='store_piece_list', data=[], storage_type='memory'),
         html.Hr(),
         html.H3(children="Piece Identification"),
+        # html.P("Define the point on the map north and east of which you want pieces to be identified. E.g. Green "
+        #        "Dragon Bridge, Bridge at Earith etc."),
+        # dl.Map(id=MAP_ID, style={'width': '1000px', 'height': '500px'}, center=[52.20274404584939, 0.12962814420461657],
+        #        zoom=10, children=[
+        #         dl.TileLayer()
+        #     ]),
         html.P(
             children="Now, choose the stroke rate above which a stroke is considered a piece and the stroke count "
                      "below which a piece will not be included:",
             className="header-description"),
         html.Div(['Stroke rate limit:',
                   dcc.Input(id="piece_rate",
-                            type='number', value=30,
+                            type='number', value=25,
                             placeholder="Select rate for piece identification", ),
                   'Stroke count limit:',
                   dcc.Input(id="stroke_count",
-                            type='number', value=10,
+                            type='number', value=30,
                             placeholder="Select stroke count for piece exclusion", )
                   ], style={'display': 'inline-block'}),
 
@@ -267,7 +271,7 @@ layout = html.Div(
           Input('A', 'value')
           )
 def update_output(value):
-    stats = get_statistics(sessions_list[dates.index(value)], stroke_slice)
+    stats = get_statistics(sessions_list[dates.index(value)])
     stats[0].loc['Split (s/500m)'] = stats[0].loc['Split (s/500m)'].apply(
         lambda x: time.strftime("%M:%S", time.gmtime(x)))
     return stats[0].reset_index(names='').to_dict('records'), stats[1], stats[2], stats[3]
@@ -279,18 +283,21 @@ def update_output(value):
           Output('store_piece_list', 'data'),
           Input('A', 'value'),
           Input('piece_rate', 'value'),
-          Input('stroke_count', 'value')
+          Input('stroke_count', 'value'),
+          # Input(MAP_ID, 'click_lat_lng')
           )
 def piece_dropdown(value, rate, stroke_count):
+    # lat = json.dumps(coords)[0]
+    # long = json.dumps(coords)[1]
     df = sessions_list[dates.index(value)]
     df_past_gr_dr = df.loc[(df['GPS Lat.'] >= gr_dr_lat) & (df['GPS Lon.'] >= gr_dr_lon)]
-    df1 = df_past_gr_dr.loc[df['Stroke Rate'] >= rate]
+    df1 = df_past_gr_dr.loc[df_past_gr_dr['Stroke Rate'] >= rate]
     list_of_df = np.split(df1, np.flatnonzero(np.diff(df1['Total Strokes']) != 1) + 1)
     list_of_pieces = [i for i in list_of_df if len(i) >= stroke_count]
     prompt = []
     for count, piece in enumerate(list_of_pieces):
         stroke_count = len(piece)
-        dist = round(piece['Distance (GPS)'].iloc[-1] - piece['Distance (GPS)'].iloc[0], -1)
+        dist = round(piece['Distance (GPS)'].iloc[-1] - piece['Distance (GPS)'].iloc[0])
         piece_time = round(piece['Elapsed Time'].iloc[-1] - piece['Elapsed Time'].iloc[0], 2)
         piece_time = time.strftime("%M:%S", time.gmtime(piece_time))
         piece_rate = round(piece['Stroke Rate'].mean(), 1)
@@ -319,7 +326,7 @@ def piece_dropdown(value, rate, stroke_count):
           )
 def piece_summary(piece_value, x_axis, split_range, rate_range, piece_list, spl_bench, rt_bench):
     list_of_pieces = [pd.DataFrame.from_dict(i) for i in piece_list]
-    stats = get_statistics(list_of_pieces[int(re.search(r'\d+', piece_value).group()) - 1], stroke_slice)
+    stats = get_statistics(list_of_pieces[int(re.search(r'\d+', piece_value).group()) - 1])
     stats[0].loc['Split (s/500m)'] = stats[0].loc['Split (s/500m)'].apply(
         lambda x: time.strftime("%M:%S", time.gmtime(x)))
     piece_data = list_of_pieces[int(re.search(r'\d+', piece_value).group()) - 1]

@@ -20,7 +20,6 @@ dash.register_page(__name__, path='/piece_comparison', name='Piece Comparison', 
 # Green Dragon Bridge latitude and longitude
 gr_dr_lat = 52.217426
 gr_dr_lon = 0.145928
-stroke_slice = (0, -1)
 split_bounds = (80, 120)
 
 
@@ -88,6 +87,19 @@ layout = html.Div([
     dcc.Dropdown(options=dates, value=dates[-1:], id='select_outing', placeholder='Select Outing Date', multi=True),
     html.P(children=''),
     dcc.Store(id='store_pieces', data=[], storage_type='memory'),
+    html.P(
+        children="Now, choose the stroke rate above which a stroke is considered a piece and the stroke count "
+                 "below which a piece will not be included:",
+        className="header-description"),
+    html.Div(['Stroke rate limit:',
+              dcc.Input(id="piece_rate_2",
+                        type='number', value=25,
+                        placeholder="Select rate for piece identification", ),
+              'Stroke count limit:',
+              dcc.Input(id="stroke_count_2",
+                        type='number', value=30,
+                        placeholder="Select stroke count for piece exclusion", )
+              ], style={'display': 'inline-block'}),
     html.P(children="Now, choose the pieces that you want to compare:"),
     dcc.Checklist(id='piece_selection', options=[]),
     html.P(id='err', style={'color': 'red'}),
@@ -125,18 +137,19 @@ layout = html.Div([
 
 # ====== Return a checklist of pieces within the outing to select ======
 @callback(Output('piece_selection', 'options'), Output('piece_selection', 'value'), Output('store_pieces', 'data'),
-          Input("select_outing", "value"))
-def piece_prompts(outings):
+          Input("select_outing", "value"), Input('piece_rate_2', 'value'), Input('stroke_count_2', 'value'))
+def piece_prompts(outings, pcrate, strcount):
     prompt = []
     piece_list = []
+    rate = pcrate
+    stroke_count = strcount
+
     outings.sort(key=lambda v: datetime.datetime.strptime(v[5:10], '%d %b'))
     for session, datestring in zip([sessions_list[i] for i in [dates.index(value) for value in outings]], outings):
         session_datetime = datestring[4:10]
-        rate = 30
-        stroke_count = 10
         df = session
         df_past_gr_dr = df.loc[(df['GPS Lat.'] >= gr_dr_lat) & (df['GPS Lon.'] >= gr_dr_lon)]
-        df1 = df_past_gr_dr.loc[df['Stroke Rate'] >= rate]
+        df1 = df_past_gr_dr.loc[df_past_gr_dr['Stroke Rate'] >= rate]
         list_of_df = np.split(df1, np.flatnonzero(np.diff(df1['Total Strokes']) != 1) + 1)
         list_of_pieces = [piece for piece in list_of_df if len(piece) >= stroke_count]
         piece_list.extend(list_of_pieces)
