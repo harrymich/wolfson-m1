@@ -55,10 +55,15 @@ for i in range(file_count):
 # Green Dragon Bridge latitude and longitude. This is used later to define after which location pieces
 # are actually identified. Also defining stroke slice which is used to define which sections of a dataframe
 # are analysed.
-gr_dr_lat = 52.356794
-gr_dr_lon = 0.049909
 
-# 52.356794, 0.049909
+# Upstream reach spinning post coordinates
+lat = 52.221814
+lon = 0.164065
+
+# Earith coordinates
+# lat = 52.356794
+# lon = 0.049909
+
 # Function Definition
 # Reading a session's date and time. Credit to Rob Sales.
 def read_session_datetime(fname):
@@ -216,6 +221,7 @@ layout = html.Div(
         html.P(children="Now, choose the piece in this outing that you want to analyse from the dropdown menu below:",
                className="header-description"),
         dcc.Dropdown(options=[], value='0', id='Piece', placeholder='Select Piece', clearable=False),
+        html.P(id='error_msg_no_pieces', style={'color': 'red'}),
         html.H3(children="Piece Summary"),
         html.Div([dash_table.DataTable(data=[], id='piece_summary')],
                  style={'width': '20%', }, className="dbc"),
@@ -239,8 +245,8 @@ layout = html.Div(
         dcc.Dropdown(options=x_axis, value=x_axis[0], id='x_axis', placeholder='Select variable to plot against',
                      clearable=False),
         html.Div(['Split and rate range for plot:']),
-        dcc.RangeSlider(60, 150, 5, count=1, value=[100, 150], id="split_range"),
-        dcc.RangeSlider(15, 50, 1, count=1, value=[24, 32], id="rate_range"),
+        dcc.RangeSlider(60, 150, 5, count=1, value=[100, 130], id="split_range"),
+        dcc.RangeSlider(15, 50, 1, count=1, value=[26, 34], id="rate_range"),
         html.Div(
             children=[
                 html.Div(
@@ -281,6 +287,7 @@ def update_output(value):
 @callback(Output('Piece', 'options'),
           Output('Piece', 'value'),
           Output('store_piece_list', 'data'),
+          Output('error_msg_no_pieces', 'children'),
           Input('A', 'value'),
           Input('piece_rate', 'value'),
           Input('stroke_count', 'value'),
@@ -290,7 +297,7 @@ def piece_dropdown(value, rate, stroke_count):
     # lat = json.dumps(coords)[0]
     # long = json.dumps(coords)[1]
     df = sessions_list[dates.index(value)]
-    df_past_gr_dr = df.loc[(df['GPS Lat.'] >= gr_dr_lat) & (df['GPS Lon.'] >= gr_dr_lon)]
+    df_past_gr_dr = df.loc[(df['GPS Lat.'] <= lat) & (df['GPS Lon.'] <= lon)]
     df1 = df_past_gr_dr.loc[df_past_gr_dr['Stroke Rate'] >= rate]
     list_of_df = np.split(df1, np.flatnonzero(np.diff(df1['Total Strokes']) != 1) + 1)
     list_of_pieces = [i for i in list_of_df if len(i) >= stroke_count]
@@ -305,7 +312,10 @@ def piece_dropdown(value, rate, stroke_count):
         prompt.append(
             "Piece {}: {}m piece at average rate of {}, average split of {}, lasting {} and {} strokes".format(
                 count + 1, dist, piece_rate, piece_split, piece_time, stroke_count))
-    return prompt, prompt[-1], [df.to_dict() for df in list_of_pieces]
+
+    if len(prompt) == 0:
+        return dash.no_update, dash.no_update, dash.no_update, 'There were no pieces identified. Please change your parameters!'
+    return prompt, prompt[-1], [df.to_dict() for df in list_of_pieces], ''
 
 
 #  ======= Produce graphs, tables and plots for piece ============

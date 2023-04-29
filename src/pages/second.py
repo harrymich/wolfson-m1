@@ -18,8 +18,16 @@ dash.register_page(__name__, path='/piece_comparison', name='Piece Comparison', 
                    image='wcbc_crest.jpg', description='Compare pieces\' splits and rates')
 
 # Green Dragon Bridge latitude and longitude
-gr_dr_lat = 52.356794
-gr_dr_lon = 0.049909
+# lat = 52.221795
+# lon = 0.163976
+
+# Upstream reach spinning post coordinates
+lat = 52.221814
+lon = 0.164065
+
+# Earith coordinates
+# lat = 52.356794
+# lon = 0.049909
 
 def read_session_date_time(fname):
     import datetime
@@ -102,8 +110,8 @@ layout = html.Div([
     dcc.Checklist(id='piece_selection', options=[]),
     html.P(id='err', style={'color': 'red'}),
     html.Hr(),
-    html.Div(['Split range for plot:', dcc.RangeSlider(60, 150, 5, count=1, value=[100, 150], id="split_range")]),
-    html.Div(['Rate range for plot:', dcc.RangeSlider(15, 50, 1, count=1, value=[24, 32], id="rate_range")]),
+    html.Div(['Split range for plot:', dcc.RangeSlider(60, 150, 5, count=1, value=[100, 130], id="split_range")]),
+    html.Div(['Rate range for plot:', dcc.RangeSlider(15, 50, 1, count=1, value=[26, 34], id="rate_range")]),
     dcc.Graph(id="piece_figure"),
     html.P("Add benchmark lines for split and rate"),
     html.Div(['Split benchmark:',
@@ -144,15 +152,16 @@ def piece_prompts(outings, pcrate, strcount):
 
     outings.sort(key=lambda v: datetime.datetime.strptime(v[5:10], '%d %b'))
     for session, datestring in zip([sessions_list[i] for i in [dates.index(value) for value in outings]], outings):
-        session_datetime = datestring[4:10]
-        df = session
-        df_past_gr_dr = df.loc[(df['GPS Lat.'] >= gr_dr_lat) & (df['GPS Lon.'] >= gr_dr_lon)]
+
+        session_datetime = datestring[4:10] + ' ' + datestring[18:26] + ','
+
+        df_past_gr_dr = session.loc[(session['GPS Lat.'] <= lat) & (session['GPS Lon.'] <= lon)]
         df1 = df_past_gr_dr.loc[df_past_gr_dr['Stroke Rate'] >= rate]
         list_of_df = np.split(df1, np.flatnonzero(np.diff(df1['Total Strokes']) != 1) + 1)
         list_of_pieces = [piece for piece in list_of_df if len(piece) >= stroke_count]
         piece_list.extend(list_of_pieces)
         for count, piece in enumerate(list_of_pieces):
-            stroke_count = len(piece)
+            # stroke_count =
             dist = round(piece['Distance (GPS)'].iloc[-1] - piece['Distance (GPS)'].iloc[0], -1)
             piece_time = round(piece['Elapsed Time'].iloc[-1] - piece['Elapsed Time'].iloc[0], 2)
             piece_time = time.strftime("%M:%S", time.gmtime(piece_time))
@@ -160,7 +169,7 @@ def piece_prompts(outings, pcrate, strcount):
             piece_split = time.strftime("%M:%S", time.gmtime(piece['Split (GPS)'].mean()))
             prompt.append(
                 "{} Piece {} : {}m piece at average rate of {}, average split of {}, lasting {} and {} strokes".format(
-                    session_datetime, count + 1, dist, piece_rate, piece_split, piece_time, stroke_count))
+                    session_datetime, count + 1, dist, piece_rate, piece_split, piece_time, len(piece)))
 
     return prompt, prompt[-2:], [df.to_dict() for df in piece_list]
 
@@ -183,7 +192,7 @@ def piece_prompts(outings, pcrate, strcount):
 def piece_list(pieces, split_range, rate_range, draws, winds, burns, split_bench, rate_bench, store_pieces,
                prompt):
     list_of_pieces = [pd.DataFrame.from_dict(i) for i in store_pieces]
-    pieces.sort(key=lambda v: (datetime.datetime.strptime(v[:6], '%d %b'), int(v[13:15])))
+    pieces.sort(key=lambda v: (datetime.datetime.strptime(v[:6], '%d %b'), int(v[23:25])))
     pieces_to_plot = [list_of_pieces[i] for i in [prompt.index(i) for i in pieces]]
 
     colors = px.colors.qualitative.Antique
@@ -205,10 +214,10 @@ def piece_list(pieces, split_range, rate_range, draws, winds, burns, split_bench
         data = piece_data
         fig.add_trace(go.Scatter(x=data['Stroke Count'], y=data['Split (GPS)'], hovertemplate='%{text}',
                                  text=['{}'.format(data['Split'].iloc[x]) for x, y in enumerate(data.index)],
-                                 name=title[:15], mode='lines', line=dict(color=colors[x]), legendrank=x), row=1, col=1)
+                                 name=title[:25], mode='lines', line=dict(color=colors[x]), legendrank=x), row=1, col=1)
         fig.add_trace(go.Scatter(x=data['Stroke Count'], y=data['Stroke Rate'], hovertemplate='%{text}',
                                  text=['{}'.format(data['Stroke Rate'].iloc[x]) for x, y in enumerate(data.index)],
-                                 name=title[:15], mode='lines', line=dict(color=colors[x]), showlegend=False), row=2,
+                                 name=title[:25], mode='lines', line=dict(color=colors[x]), showlegend=False), row=2,
                       col=1)
 
     fig.update_layout(height=750,
