@@ -55,10 +55,12 @@ for i in range(file_count):
 # Green Dragon Bridge latitude and longitude. This is used later to define after which location pieces
 # are actually identified. Also defining stroke slice which is used to define which sections of a dataframe
 # are analysed.
+lat = 52.221795
+lon = 0.163976
 
 # Upstream reach spinning post coordinates
-lat = 52.221814
-lon = 0.164065
+# lat = 52.221814
+# lon = 0.164065
 
 # Earith coordinates
 # lat = 52.356794
@@ -124,7 +126,7 @@ def get_statistics(fname):
 
     elapsed_time = data["Elapsed Time"]
     elapsed_time = elapsed_time.iloc[-1] - elapsed_time.iloc[0]
-    elapsed_time = time.strftime("%M:%S", time.gmtime(elapsed_time))
+    elapsed_time = str(datetime.timedelta(seconds = elapsed_time))[2:9]
 
     time_el = "{} - {}".format("Total Elapsed Time (mm:ss)", elapsed_time)
 
@@ -279,7 +281,7 @@ layout = html.Div(
 def update_output(value):
     stats = get_statistics(sessions_list[dates.index(value)])
     stats[0].loc['Split (s/500m)'] = stats[0].loc['Split (s/500m)'].apply(
-        lambda x: time.strftime("%M:%S", time.gmtime(x)))
+        lambda x: str(datetime.timedelta(seconds = x))[2:9])
     return stats[0].reset_index(names='').to_dict('records'), stats[1], stats[2], stats[3]
 
 
@@ -297,7 +299,7 @@ def piece_dropdown(value, rate, stroke_count):
     # lat = json.dumps(coords)[0]
     # long = json.dumps(coords)[1]
     df = sessions_list[dates.index(value)]
-    df_past_gr_dr = df.loc[(df['GPS Lat.'] <= lat) & (df['GPS Lon.'] <= lon)]
+    df_past_gr_dr = df.loc[(df['GPS Lat.'] >= lat) & (df['GPS Lon.'] >= lon)]
     df1 = df_past_gr_dr.loc[df_past_gr_dr['Stroke Rate'] >= rate]
     list_of_df = np.split(df1, np.flatnonzero(np.diff(df1['Total Strokes']) != 1) + 1)
     list_of_pieces = [i for i in list_of_df if len(i) >= stroke_count]
@@ -306,7 +308,7 @@ def piece_dropdown(value, rate, stroke_count):
         stroke_count = len(piece)
         dist = round(piece['Distance (GPS)'].iloc[-1] - piece['Distance (GPS)'].iloc[0])
         piece_time = round(piece['Elapsed Time'].iloc[-1] - piece['Elapsed Time'].iloc[0], 2)
-        piece_time = time.strftime("%M:%S", time.gmtime(piece_time))
+        piece_time = str(datetime.timedelta(seconds = piece_time))[2:9]
         piece_rate = round(piece['Stroke Rate'].mean(), 1)
         piece_split = time.strftime("%M:%S", time.gmtime(piece['Split (GPS)'].mean()))
         prompt.append(
@@ -338,7 +340,7 @@ def piece_summary(piece_value, x_axis, split_range, rate_range, piece_list, spl_
     list_of_pieces = [pd.DataFrame.from_dict(i) for i in piece_list]
     stats = get_statistics(list_of_pieces[int(re.search(r'\d+', piece_value).group()) - 1])
     stats[0].loc['Split (s/500m)'] = stats[0].loc['Split (s/500m)'].apply(
-        lambda x: time.strftime("%M:%S", time.gmtime(x)))
+        lambda x: str(datetime.timedelta(seconds = x))[2:9])
     piece_data = list_of_pieces[int(re.search(r'\d+', piece_value).group()) - 1]
     piece_data['Stroke Count'] = np.arange(piece_data.shape[0] + 1)[1:]
     piece_data['Piece Time (s)'] = [round(piece_data['Elapsed Time'].loc[i] - piece_data['Elapsed Time'].iloc[0], 2) for

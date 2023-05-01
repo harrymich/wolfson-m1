@@ -18,12 +18,12 @@ dash.register_page(__name__, path='/piece_comparison', name='Piece Comparison', 
                    image='wcbc_crest.jpg', description='Compare pieces\' splits and rates')
 
 # Green Dragon Bridge latitude and longitude
-# lat = 52.221795
-# lon = 0.163976
+lat = 52.221795
+lon = 0.163976
 
 # Upstream reach spinning post coordinates
-lat = 52.221814
-lon = 0.164065
+# lat = 52.221814
+# lon = 0.164065
 
 # Earith coordinates
 # lat = 52.356794
@@ -155,7 +155,7 @@ def piece_prompts(outings, pcrate, strcount):
 
         session_datetime = datestring[4:10] + ' ' + datestring[18:26] + ','
 
-        df_past_gr_dr = session.loc[(session['GPS Lat.'] <= lat) & (session['GPS Lon.'] <= lon)]
+        df_past_gr_dr = session.loc[(session['GPS Lat.'] >= lat) & (session['GPS Lon.'] >= lon)]
         df1 = df_past_gr_dr.loc[df_past_gr_dr['Stroke Rate'] >= rate]
         list_of_df = np.split(df1, np.flatnonzero(np.diff(df1['Total Strokes']) != 1) + 1)
         list_of_pieces = [piece for piece in list_of_df if len(piece) >= stroke_count]
@@ -164,7 +164,7 @@ def piece_prompts(outings, pcrate, strcount):
             # stroke_count =
             dist = round(piece['Distance (GPS)'].iloc[-1] - piece['Distance (GPS)'].iloc[0], -1)
             piece_time = round(piece['Elapsed Time'].iloc[-1] - piece['Elapsed Time'].iloc[0], 2)
-            piece_time = time.strftime("%M:%S", time.gmtime(piece_time))
+            piece_time = str(datetime.timedelta(seconds = piece_time))[2:9]
             piece_rate = round(piece['Stroke Rate'].mean(), 1)
             piece_split = time.strftime("%M:%S", time.gmtime(piece['Split (GPS)'].mean()))
             prompt.append(
