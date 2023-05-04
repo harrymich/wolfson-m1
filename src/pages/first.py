@@ -142,9 +142,9 @@ def get_statistics(fname):
     return sum_table, stroke_count, distance, time_el
 
 
-def plot_split(data):
+def plot_split(data, range_color):
     df = data
-    range_color = [80, 130]
+
     split_list = list(range(range_color[0], range_color[1] + 1, 5))
     splits = [time.strftime("%M:%S", time.gmtime(item)) for item in split_list]
     hover_name = df['Stroke Count'].apply(lambda x: 'Stroke {:7.0f}'.format(x)).copy()
@@ -235,8 +235,9 @@ layout = html.Div(
         html.P(
             children="The selected piece is mapped below and will update if you select another one. It's an "
                      "interactive map so hover over each point (stroke) to see the data (e.g. split and rate) "
-                     "associated with that stroke:",
+                     "associated with that stroke. You can select the split range for the colour scale below:",
             className="header-description"),
+        dcc.RangeSlider(70, 150, 5, count=1, value=[100, 130], id="colour_range"),
         html.Div(
             children=[
                 html.Div(
@@ -247,7 +248,7 @@ layout = html.Div(
         dcc.Dropdown(options=x_axis, value=x_axis[0], id='x_axis', placeholder='Select variable to plot against',
                      clearable=False),
         html.Div(['Split and rate range for plot:']),
-        dcc.RangeSlider(60, 150, 5, count=1, value=[100, 130], id="split_range"),
+        dcc.RangeSlider(70, 170, 5, count=1, value=[100, 130], id="split_range"),
         dcc.RangeSlider(15, 50, 1, count=1, value=[26, 34], id="rate_range"),
         html.Div(
             children=[
@@ -299,7 +300,8 @@ def piece_dropdown(value, rate, stroke_count):
     # lat = json.dumps(coords)[0]
     # long = json.dumps(coords)[1]
     df = sessions_list[dates.index(value)]
-    df_past_gr_dr = df.loc[(df['GPS Lat.'] >= lat) & (df['GPS Lon.'] >= lon)]
+    # df_past_gr_dr = df.loc[(df['GPS Lat.'] >= lat) & (df['GPS Lon.'] >= lon)]
+    df_past_gr_dr = df
     df1 = df_past_gr_dr.loc[df_past_gr_dr['Stroke Rate'] >= rate]
     list_of_df = np.split(df1, np.flatnonzero(np.diff(df1['Total Strokes']) != 1) + 1)
     list_of_pieces = [i for i in list_of_df if len(i) >= stroke_count]
@@ -332,11 +334,12 @@ def piece_dropdown(value, rate, stroke_count):
           Input('x_axis', 'value'),
           Input('split_range', 'value'),
           Input('rate_range', 'value'),
+          Input('colour_range', 'value'),
           Input('store_piece_list', 'data'),
           Input('split_bench_2', 'value'),
           Input('rate_bench_2', 'value')
           )
-def piece_summary(piece_value, x_axis, split_range, rate_range, piece_list, spl_bench, rt_bench):
+def piece_summary(piece_value, x_axis, split_range, rate_range, colour_range, piece_list, spl_bench, rt_bench):
     list_of_pieces = [pd.DataFrame.from_dict(i) for i in piece_list]
     stats = get_statistics(list_of_pieces[int(re.search(r'\d+', piece_value).group()) - 1])
     stats[0].loc['Split (s/500m)'] = stats[0].loc['Split (s/500m)'].apply(
@@ -350,7 +353,7 @@ def piece_summary(piece_value, x_axis, split_range, rate_range, piece_list, spl_
         round(piece_data['Distance (GPS)'].loc[i] - piece_data['Distance (GPS)'].iloc[0], 2) for i in
         piece_data['Distance (GPS)'].index]
     piece_data = piece_data.rename(columns={'Elapsed Time': 'Outing Time', 'Distance (GPS)': 'Outing Distance'})
-    plot = plot_split(list_of_pieces[int(re.search(r'\d+', piece_value).group()) - 1])
+    plot = plot_split(list_of_pieces[int(re.search(r'\d+', piece_value).group()) - 1], colour_range)
 
     data = piece_data
     x = data[x_axis]
@@ -386,5 +389,4 @@ def piece_summary(piece_value, x_axis, split_range, rate_range, piece_list, spl_
 
     fig.update_layout(height=500, hovermode="x unified", legend_traceorder="normal")
 
-    return stats[0].reset_index(names='').to_dict('records'), stats[1], stats[2], stats[3], piece_data.drop(
-        ['GPS Lon.', 'GPS Lat.'], axis=1).to_dict('records'), plot, fig
+    return stats[0].reset_index(names='').to_dict('records'), stats[1], stats[2], stats[3], piece_data.to_dict('records'), plot, fig

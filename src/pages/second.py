@@ -155,7 +155,8 @@ def piece_prompts(outings, pcrate, strcount):
 
         session_datetime = datestring[4:10] + ' ' + datestring[18:26] + ','
 
-        df_past_gr_dr = session.loc[(session['GPS Lat.'] >= lat) & (session['GPS Lon.'] >= lon)]
+        # df_past_gr_dr = session.loc[(session['GPS Lat.'] >= lat) & (session['GPS Lon.'] >= lon)]
+        df_past_gr_dr = session
         df1 = df_past_gr_dr.loc[df_past_gr_dr['Stroke Rate'] >= rate]
         list_of_df = np.split(df1, np.flatnonzero(np.diff(df1['Total Strokes']) != 1) + 1)
         list_of_pieces = [piece for piece in list_of_df if len(piece) >= stroke_count]
