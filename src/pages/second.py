@@ -236,13 +236,13 @@ def piece_list(pieces, split_range, rate_range, draws, winds, burns, split_bench
         spl_bench_str = int(split_bench[1]) * 60 + int(split_bench[3]) * 10 + int(split_bench[4])
         fig.add_trace(go.Scatter(x=[0, full_fig.layout.xaxis.range[1]], y=[spl_bench_str, spl_bench_str],
                                  name='Benchmark: {}s'.format(split_bench),
-                                 mode='lines', line_dash="dash", hovertemplate='', line=dict(color='white')), row=1,
+                                 mode='lines', line_dash="dash", hovertemplate='', line=dict(color='red')), row=1,
                       col=1)
 
     if rate_bench:
         fig.add_trace(go.Scatter(x=[0, full_fig.layout.xaxis.range[1]], y=[rate_bench, rate_bench],
                                  name='Benchmark: {}s/m'.format(rate_bench),
-                                 mode='lines', line_dash="dash", hovertemplate='', line=dict(color='white')), row=2,
+                                 mode='lines', line_dash="dash", hovertemplate='', line=dict(color='red')), row=2,
                       col=1)
 
     columns_split = {}
