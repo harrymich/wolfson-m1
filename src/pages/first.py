@@ -81,7 +81,10 @@ def read_session_datetime(fname):
     time_m = int(time_string[2:4])
 
     if "pm" in fname:
-        time_h = time_h + 12
+        if time_h == 12:
+            time_h = time_h
+        else:
+            time_h = time_h + 12
     else:
         pass
 
@@ -176,6 +179,8 @@ def plot_split(data, range_color):
 dates = []
 for name in files:
     dates.append(read_session_datetime(name))
+
+dates.sort(key=lambda v: (datetime.datetime.strptime(v[5:10], '%d %b'), datetime.datetime.strptime(v[18:26], '%H:%M %p')))
 
 x_axis = ['Stroke Count', 'Piece Time (s)', 'Piece Distance (m)']
 

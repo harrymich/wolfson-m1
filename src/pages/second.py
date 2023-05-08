@@ -42,7 +42,10 @@ def read_session_date_time(fname):
     time_m = int(time_string[2:4])
 
     if "pm" in fname:
-        time_h = time_h + 12
+        if time_h == 12:
+            time_h = time_h
+        else:
+            time_h = time_h + 12
 
     session = datetime.datetime(date_y, date_m, date_d, time_h, time_m)
 
