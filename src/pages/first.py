@@ -58,6 +58,7 @@ for i in range(file_count):
 lat = 52.221795
 lon = 0.163976
 
+
 # Upstream reach spinning post coordinates
 # lat = 52.221814
 # lon = 0.164065
@@ -94,6 +95,7 @@ def read_session_datetime(fname):
 
     return session_datetime
 
+
 # Reading a session's date and time. Credit to Rob Sales.
 def get_statistics(fname):
     data = fname
@@ -129,7 +131,7 @@ def get_statistics(fname):
 
     elapsed_time = data["Elapsed Time"]
     elapsed_time = elapsed_time.iloc[-1] - elapsed_time.iloc[0]
-    elapsed_time = str(datetime.timedelta(seconds = elapsed_time))[2:9]
+    elapsed_time = str(datetime.timedelta(seconds=elapsed_time))[2:9]
 
     time_el = "{} - {}".format("Total Elapsed Time (mm:ss)", elapsed_time)
 
@@ -180,11 +182,14 @@ dates = []
 for name in files:
     dates.append(read_session_datetime(name))
 
-dates.sort(key=lambda v: (datetime.datetime.strptime(v[5:10], '%d %b'), datetime.datetime.strptime(v[18:26], '%H:%M %p')))
+# This line of code sorts the dropdown menu for selecting outings. It does not sort the underlying data. Do not use
+# until the latter is fixed as then the date selection and underlying data don't match up.
+# dates.sort(key=lambda v: (datetime.datetime.strptime(v[5:10], '%d %b'), datetime.datetime.strptime(v[18:26], '%H:%M %p')))
 
 x_axis = ['Stroke Count', 'Piece Time (s)', 'Piece Distance (m)']
 
-dash.register_page(__name__, path='/session_summary', name='Session Summary', title='Session Summary', image='wcbc_crest.jpg',
+dash.register_page(__name__, path='/session_summary', name='Session Summary', title='Session Summary',
+                   image='wcbc_crest.jpg',
                    description='Come here for all your sweet split and rate analysis')
 
 # app.title = "Outing Analysis"
@@ -287,7 +292,7 @@ layout = html.Div(
 def update_output(value):
     stats = get_statistics(sessions_list[dates.index(value)])
     stats[0].loc['Split (s/500m)'] = stats[0].loc['Split (s/500m)'].apply(
-        lambda x: str(datetime.timedelta(seconds = x))[2:9])
+        lambda x: str(datetime.timedelta(seconds=x))[2:9])
     return stats[0].reset_index(names='').to_dict('records'), stats[1], stats[2], stats[3]
 
 
@@ -315,7 +320,7 @@ def piece_dropdown(value, rate, stroke_count):
         stroke_count = len(piece)
         dist = round(piece['Distance (GPS)'].iloc[-1] - piece['Distance (GPS)'].iloc[0])
         piece_time = round(piece['Elapsed Time'].iloc[-1] - piece['Elapsed Time'].iloc[0], 2)
-        piece_time = str(datetime.timedelta(seconds = piece_time))[2:9]
+        piece_time = str(datetime.timedelta(seconds=piece_time))[2:9]
         piece_rate = round(piece['Stroke Rate'].mean(), 1)
         piece_split = time.strftime("%M:%S", time.gmtime(piece['Split (GPS)'].mean()))
         prompt.append(
@@ -348,7 +353,7 @@ def piece_summary(piece_value, x_axis, split_range, rate_range, colour_range, pi
     list_of_pieces = [pd.DataFrame.from_dict(i) for i in piece_list]
     stats = get_statistics(list_of_pieces[int(re.search(r'\d+', piece_value).group()) - 1])
     stats[0].loc['Split (s/500m)'] = stats[0].loc['Split (s/500m)'].apply(
-        lambda x: str(datetime.timedelta(seconds = x))[2:9])
+        lambda x: str(datetime.timedelta(seconds=x))[2:9])
     piece_data = list_of_pieces[int(re.search(r'\d+', piece_value).group()) - 1]
     piece_data['Stroke Count'] = np.arange(piece_data.shape[0] + 1)[1:]
     piece_data['Piece Time (s)'] = [round(piece_data['Elapsed Time'].loc[i] - piece_data['Elapsed Time'].iloc[0], 2) for
@@ -381,7 +386,7 @@ def piece_summary(piece_value, x_axis, split_range, rate_range, colour_range, pi
     fig.update_yaxes(title_text="Stroke rate (s/m)", range=rate_range, row=1, col=1, secondary_y=True)
     fig.layout.yaxis2.showgrid = False
     if spl_bench:
-        spl_bench_str = int(spl_bench[1])*60+int(spl_bench[3])*10+int(spl_bench[4])
+        spl_bench_str = int(spl_bench[1]) * 60 + int(spl_bench[3]) * 10 + int(spl_bench[4])
         fig.add_trace(go.Scatter(x=[x.min(), x.max()], y=[spl_bench_str, spl_bench_str],
                                  name='Benchmark: {}s'.format(spl_bench),
                                  mode='lines', line_dash="dash", hovertemplate='', line=dict(color=colors[0])))
@@ -394,4 +399,5 @@ def piece_summary(piece_value, x_axis, split_range, rate_range, colour_range, pi
 
     fig.update_layout(height=500, hovermode="x unified", legend_traceorder="normal")
 
-    return stats[0].reset_index(names='').to_dict('records'), stats[1], stats[2], stats[3], piece_data.to_dict('records'), plot, fig
+    return stats[0].reset_index(names='').to_dict('records'), stats[1], stats[2], stats[3], piece_data.to_dict(
+        'records'), plot, fig
