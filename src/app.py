@@ -31,7 +31,7 @@ app.layout = dbc.Container([
             html.Img(src='assets\wcbc_crest.jpg', style={'height': '100%', 'width': '100%'})
         ], width=1
     ),
-        dbc.Col(html.Div("Outing Analysis",
+        dbc.Col(html.Div("Μ1 Outing Analysis",
                          style={'fontSize': 50, 'textAlign': 'center'})),
         dbc.Col(
             [
