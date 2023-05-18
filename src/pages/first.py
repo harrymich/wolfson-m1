@@ -34,6 +34,9 @@ sessions_list = []
 for i in range(file_count):
     temp_df = pd.read_csv("./csv/" + files[i], skiprows=28, usecols=[1, 3, 4, 5, 8, 9, 10, 22, 23]).drop([0])
 
+    # Remove rows with '---' as value because this messes up the float type change later.
+    temp_df = temp_df[temp_df['Speed (GPS)'] != '---']
+
     # Change type of most columns to float
     temp_df = temp_df.astype({"Distance (GPS)": float, 'Speed (GPS)': float, 'Stroke Rate': float, 'Total Strokes': int,
                               'Distance/Stroke (GPS)': float, 'GPS Lat.': float, 'GPS Lon.': float})
