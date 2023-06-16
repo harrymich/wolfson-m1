@@ -87,7 +87,7 @@ for name in files:
     dates.append(read_session_date_time(name))
 # The below line was meant to show outing dates in the dropdown in order but since the csv files are not read in order,
 # it messes up the reading of the csv. The wrong date is shown for a given csv.
-# dates.sort(key=lambda v: datetime.datetime.strptime(v[5:10], '%d %b'))
+sorted_dates = sorted(dates, key=lambda v: (datetime.datetime.strptime(v[4:10], '%d %b'), datetime.datetime.strptime(v[18:26], '%H:%M %p')))
 
 layout = html.Div([
     html.H1(children='Piece Comparison'),
@@ -97,7 +97,7 @@ layout = html.Div([
     html.Div(children='''
         Select the outing date:
     '''),
-    dcc.Dropdown(options=dates, value=dates[-1:], id='select_outing', placeholder='Select Outing Date', multi=True),
+    dcc.Dropdown(options=sorted_dates, value=sorted_dates[-1:], id='select_outing', placeholder='Select Outing Date', multi=True),
     html.P(children=''),
     dcc.Store(id='store_pieces', data=[], storage_type='memory'),
     html.P(
@@ -157,7 +157,7 @@ def piece_prompts(outings, pcrate, strcount):
     rate = pcrate
     stroke_count = strcount
 
-    outings.sort(key=lambda v: datetime.datetime.strptime(v[5:10], '%d %b'))
+    outings.sort(key=lambda v: datetime.datetime.strptime(v[4:10], '%d %b'))
     for session, datestring in zip([sessions_list[i] for i in [dates.index(value) for value in outings]], outings):
 
         session_datetime = datestring[4:10] + ' ' + datestring[18:26] + ','

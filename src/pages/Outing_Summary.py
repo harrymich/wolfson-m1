@@ -187,7 +187,7 @@ for name in files:
 
 # This line of code sorts the dropdown menu for selecting outings. It does not sort the underlying data. Do not use
 # until the latter is fixed as then the date selection and underlying data don't match up.
-# dates.sort(key=lambda v: (datetime.datetime.strptime(v[5:10], '%d %b'), datetime.datetime.strptime(v[18:26], '%H:%M %p')))
+sorted_dates = sorted(dates, key=lambda v: (datetime.datetime.strptime(v[4:10], '%d %b'), datetime.datetime.strptime(v[18:26], '%H:%M %p')))
 
 x_axis = ['Stroke Count', 'Piece Time (s)', 'Piece Distance (m)']
 
@@ -203,7 +203,7 @@ layout = html.Div(
         html.P(children="First, choose the outing you want to analyse from the dropdown menu below",
                className="header-description"
                ),
-        dcc.Dropdown(options=dates, value=dates[-1], id='A', placeholder='Select Outing Date'),
+        dcc.Dropdown(options=sorted_dates, value=sorted_dates[-1], id='A', placeholder='Select Outing Date'),
         html.H2(children="Outing summary"),
         html.Div([dash_table.DataTable(data=[], id='session_summary')],
                  style={'width': '20%', }, className="dbc"),
